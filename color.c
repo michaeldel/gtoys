@@ -35,7 +35,7 @@ int main(int argc, char * argv[]) {
         0, 0, WIDTH, HEIGHT,
         0, BlackPixel(display, screen), color
     );
-    XSelectInput(display, window, ExposureMask | KeyPressMask);
+    XSelectInput(display, window, StructureNotifyMask | ExposureMask | KeyPressMask);
     XMapWindow(display, window);
 
     Atom WM_DELETE = XInternAtom(display, "WM_DELETE_WINDOW", false);
@@ -53,16 +53,6 @@ int main(int argc, char * argv[]) {
     pango_layout_set_font_description(layout, fontdesc);
     pango_font_description_free(fontdesc);
 
-    int layoutwidth, layoutheight;
-    pango_layout_get_size(layout, &layoutwidth, &layoutheight);
-    cairo_move_to(
-        ctx,
-        (double) layoutwidth / (2.0 * PANGO_SCALE),
-        (double) layoutheight / (2.0 * PANGO_SCALE)
-    );
-
-    cairo_xlib_surface_set_size(surface, WIDTH, HEIGHT);
-
     bool running = true;
 
     while (running) {
@@ -70,8 +60,25 @@ int main(int argc, char * argv[]) {
         XNextEvent(display, &event);
 
         switch(event.type) {
-        case Expose:
+        case Expose: {
+            const int surfacewidth = cairo_xlib_surface_get_width(surface);
+            const int surfaceheight = cairo_xlib_surface_get_height(surface);
+
+            int layoutwidth, layoutheight;
+            pango_layout_get_size(layout, &layoutwidth, &layoutheight);
+            cairo_move_to(
+                ctx,
+                (surfacewidth - (double) layoutwidth / PANGO_SCALE) / 2.0,
+                (surfaceheight - (double) layoutheight / PANGO_SCALE) / 2.0
+            );
             pango_cairo_show_layout(ctx, layout);
+        }; break;
+        case ConfigureNotify:
+            cairo_xlib_surface_set_size(
+                surface,
+                event.xconfigure.width,
+                event.xconfigure.height
+            );
             break;
         case ClientMessage:
             if ((Atom) event.xclient.data.l[0] == WM_DELETE) running = false;
