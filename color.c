@@ -9,6 +9,7 @@
 
 void die(const char * message) {
     fputs(message, stderr);
+    fputc('\n', stderr);
     exit(EXIT_FAILURE);
 }
 
