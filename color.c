@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <cairo.h>
+#include <cairo-xlib.h>
+#include <pango/pangocairo.h>
 #include <X11/Xlib.h>
 
 #define WIDTH 128
@@ -38,6 +41,28 @@ int main(int argc, char * argv[]) {
     Atom WM_DELETE = XInternAtom(display, "WM_DELETE_WINDOW", false);
     XSetWMProtocols(display, window, &WM_DELETE, 1);
 
+    cairo_surface_t * surface = cairo_xlib_surface_create(
+        display, window, DefaultVisual(display, screen), WIDTH, HEIGHT
+    );
+    cairo_t * ctx = cairo_create(surface);
+
+    PangoLayout * layout = pango_cairo_create_layout(ctx);
+    PangoFontDescription * fontdesc = pango_font_description_from_string("monospace");
+
+    pango_layout_set_text(layout, argv[1], -1);
+    pango_layout_set_font_description(layout, fontdesc);
+    pango_font_description_free(fontdesc);
+
+    int layoutwidth, layoutheight;
+    pango_layout_get_size(layout, &layoutwidth, &layoutheight);
+    cairo_move_to(
+        ctx,
+        (double) layoutwidth / (2.0 * PANGO_SCALE),
+        (double) layoutheight / (2.0 * PANGO_SCALE)
+    );
+
+    cairo_xlib_surface_set_size(surface, WIDTH, HEIGHT);
+
     bool running = true;
 
     while (running) {
@@ -45,11 +70,17 @@ int main(int argc, char * argv[]) {
         XNextEvent(display, &event);
 
         switch(event.type) {
+        case Expose:
+            pango_cairo_show_layout(ctx, layout);
+            break;
         case ClientMessage:
             if ((Atom) event.xclient.data.l[0] == WM_DELETE) running = false;
             break;
         }
     }
+
+    cairo_destroy(ctx);
+    cairo_surface_destroy(surface);
 
     XDestroyWindow(display, window);
     XCloseDisplay(display);
