@@ -30,7 +30,7 @@ int main(int argc, char * argv[]) {
         display,
         RootWindow(display, screen),
         0, 0, WIDTH, HEIGHT,
-        1, BlackPixel(display, screen), color
+        0, BlackPixel(display, screen), color
     );
     XSelectInput(display, window, ExposureMask | KeyPressMask);
     XMapWindow(display, window);
