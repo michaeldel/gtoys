@@ -12,7 +12,15 @@ void die(const char * message) {
     exit(EXIT_FAILURE);
 }
 
-int main(void) {
+unsigned long parsecolor(const char * string) {
+    if (string[0] != '#') die("invalid color format"); /* TODO: stricter check */
+    return strtol(&string[1], NULL, 16);
+}
+
+int main(int argc, char * argv[]) {
+    if (argc != 2) die("argument missing"); 
+    const unsigned long color = parsecolor(argv[1]);
+
     Display * display = XOpenDisplay(NULL);
     if (display == NULL) die("failed to open display");
 
@@ -21,7 +29,7 @@ int main(void) {
         display,
         RootWindow(display, screen),
         0, 0, WIDTH, HEIGHT,
-        1, BlackPixel(display, screen), WhitePixel(display, screen)
+        1, BlackPixel(display, screen), color
     );
     XSelectInput(display, window, ExposureMask | KeyPressMask);
     XMapWindow(display, window);
@@ -34,6 +42,7 @@ int main(void) {
     while (running) {
         XEvent event;
         XNextEvent(display, &event);
+
         switch(event.type) {
         case ClientMessage:
             if ((Atom) event.xclient.data.l[0] == WM_DELETE) running = false;
