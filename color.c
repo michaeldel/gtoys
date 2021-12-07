@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include <cairo.h>
 #include <cairo-xlib.h>
@@ -100,6 +101,10 @@ void draw(struct drawstate ds) {
         (surfaceheight - (double) layoutheight / PANGO_SCALE) / 2.0
     );
     pango_cairo_show_layout(ctx, layout);
+
+    cairo_move_to(ctx, 50, 25);
+    cairo_arc(ctx, 25, 25, 25, 0, 2 * M_PI);
+    cairo_stroke(ctx);
 
     cairo_destroy(ctx);
 }

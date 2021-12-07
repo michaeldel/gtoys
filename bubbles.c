@@ -11,6 +11,8 @@
 #include <pango/pangocairo.h>
 #include <X11/Xlib.h>
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 #define FPS 30
 
 #define WIDTH 128
@@ -18,9 +20,14 @@
 
 #define MAX_BUBBLES 256
 
+#define MIN_RADIUS 0.01
+#define MAX_RADIUS 0.05
+
 struct bubble {
     float x;
     float y;
+
+    float r;
 };
 
 static struct bubble bubbles[MAX_BUBBLES];
@@ -73,6 +80,7 @@ void destroywinstate(struct winstate ws) {
 void emitbubble(void) {
     bubbles[nbubbles].x = 1.0f * rand() / RAND_MAX;
     bubbles[nbubbles].y = 1.0f * rand() / RAND_MAX;
+    bubbles[nbubbles].r = MIN_RADIUS + (MAX_RADIUS - MIN_RADIUS) * rand() / RAND_MAX;
     nbubbles++;
 }
 
@@ -106,7 +114,8 @@ void draw(struct drawstate ds) {
 
     for (size_t i = 0; i < nbubbles; i++) {
         const struct bubble b = bubbles[i];
-        cairo_arc(ctx, surfacewidth * b.x, surfaceheight * b.y, 25, 0, 2 * M_PI);
+        const int radius = MIN(surfacewidth, surfaceheight) * b.r;
+        cairo_arc(ctx, surfacewidth * b.x, surfaceheight * b.y, radius, 0, 2 * M_PI);
         cairo_stroke(ctx);
     }
 
@@ -126,16 +135,8 @@ void resize(struct drawstate ds, int width, int height) {
 }
 
 void mainloop(struct winstate ws, struct drawstate ds) {
-    emitbubble();
-    emitbubble();
-    emitbubble();
-    emitbubble();
-    emitbubble();
-    emitbubble();
-    emitbubble();
-    emitbubble();
-    emitbubble();
-    emitbubble();
+    for (size_t i = 0; i < 20; i++)
+        emitbubble();
 
     clock_t prevt = clock();
 
