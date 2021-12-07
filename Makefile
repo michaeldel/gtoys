@@ -5,6 +5,10 @@ LDFLAGS = -lm $(shell pkg-config --libs cairo-xlib pangocairo)
 color: color.c
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS) 
 
+bubbles: bubbles.c
+	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
+
+
 test/test_util_color: test/test_util_color.c util/color.c
 	$(CC) -o $@ $(CFLAGS) -iquote . $^ $(LDFLAGS)
 
@@ -12,6 +16,6 @@ test: test/test_util_color
 	./test/test_util_color
 
 clean:
-	rm color test/test_util_color
+	rm color bubbles test/test_util_color
 
 .PHONY: clean test
