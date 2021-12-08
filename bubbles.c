@@ -79,9 +79,13 @@ void destroywinstate(struct winstate ws) {
 
 void emitbubble(void) {
     bubbles[nbubbles].x = 1.0f * rand() / RAND_MAX;
-    bubbles[nbubbles].y = 1.0f * rand() / RAND_MAX;
+    bubbles[nbubbles].y = 1.0f;
     bubbles[nbubbles].r = MIN_RADIUS + (MAX_RADIUS - MIN_RADIUS) * rand() / RAND_MAX;
     nbubbles++;
+}
+
+void popbubble(size_t index) {
+    bubbles[index] = bubbles[--nbubbles];
 }
 
 struct drawstate {
@@ -106,6 +110,8 @@ void destroydrawstate(struct drawstate ds) {
 
 void draw(struct drawstate ds) {
     cairo_t * ctx = cairo_create(ds.surface);
+    cairo_push_group(ctx);
+    cairo_set_operator(ctx, CAIRO_OPERATOR_SOURCE);
     cairo_paint(ctx);
     cairo_set_source_rgb(ctx, 223.0 / 255, 249.0 / 255, 251.0 / 255);
 
@@ -114,19 +120,26 @@ void draw(struct drawstate ds) {
 
     for (size_t i = 0; i < nbubbles; i++) {
         const struct bubble b = bubbles[i];
+
+        const int x = surfacewidth * b.x;
+        const int y = surfaceheight * b.y;
         const int radius = MIN(surfacewidth, surfaceheight) * b.r;
-        cairo_arc(ctx, surfacewidth * b.x, surfaceheight * b.y, radius, 0, 2 * M_PI);
+
+        cairo_arc(ctx, x, y, radius, 0, 2 * M_PI);
         cairo_stroke(ctx);
     }
+    cairo_pop_group_to_source(ctx);
+    cairo_paint(ctx);
 
     cairo_destroy(ctx);
 }
 
 void update(float dt) {
-    const float speed = 0.7;
+    const float speed = 7.0f;
 
     for (size_t i = 0; i < nbubbles; i++) {
-        bubbles[i].y -= dt * speed;
+        if (bubbles[i].y + bubbles[i].r < 0) popbubble(i);
+        bubbles[i].y -= dt * speed * bubbles[i].r;
     }
 }
 
@@ -162,7 +175,7 @@ void mainloop(struct winstate ws, struct drawstate ds) {
 
         update(dt);
         draw(ds);
-        
+
         const unsigned int mspf = 1000000 / FPS;
         if (dt < mspf) usleep(mspf - dt);
     }
